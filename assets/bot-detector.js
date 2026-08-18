@@ -1,16 +1,27 @@
 /**
- * Cloudflare Turnstile verification gate for Chromebook Unlocked.
+ * Bot detector stub — disables Cloudflare Turnstile and restores expected
+ * window.botDetector API so pages and games that depend on it work.
  *
- * Runs Turnstile INVISIBLY on first page load of a session. Most human
- * visitors are cleared by the non-interactive challenge and never see
- * anything — ads simply load a moment later once the success callback fires.
- * The full-screen interstitial is only revealed if Turnstile decides the
- * visitor needs to interact (i.e. the traffic looks risky/bot-like).
- * Verification is cached in sessionStorage so subsequent navigations within
- * the same tab session pass through instantly.
+ * This file intentionally does not perform any verification. It immediately
+ * marks the session as verified and invokes registered callbacks. Use this
+ * when you want the site to behave normally without Cloudflare Turnstile.
  *
- * Public API (kept compatible with prior bot-detector.js callers):
- *   window.botDetector.shouldBlockAds()  -> boolean
- *   window.botDetector.isVerified()      -> boolean
- *   window.botDetector.onVerified(cb)    -> register a one-shot callback
+ * To restore Turnstile behavior later, replace this file with the original
+ * implementation from your repository history (or revert this commit).
  */
+(function () {
+  'use strict';
+
+  // Keep the same public API used across the site.
+  window.botDetector = {
+    // Return false so ad/games code does not block resource loading.
+    shouldBlockAds: function () { return false; },
+    // Immediately say the session is verified.
+    isVerified: function () { return true; },
+    // Call the callback immediately (one-shot) to mimic verification.
+    onVerified: function (cb) {
+      if (typeof cb !== 'function') return;
+      try { cb(); } catch (e) { /* swallow callback errors */ }
+    }
+  };
+})();
